@@ -1,0 +1,91 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <ESP32Servo.h>
+
+#define TRIG_PIN 5
+#define ECHO_PIN 18
+#define SERVO_PIN 26
+
+// Ganti 0x27 menjadi 0x3F jika scanner menemukan 0x3F
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+Servo servo;
+
+float getDistance() {
+
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  float distance = duration * 0.034 / 2;
+
+  return distance;
+}
+
+void setup() {
+
+  Serial.begin(115200);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  servo.attach(SERVO_PIN);
+  servo.write(0);
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("SmartBinSalabin");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Ready...");
+}
+
+void loop() {
+
+  float distance = getDistance();
+
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  if (distance > 0 && distance < 20) {
+
+    // Buka tutup
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Opening...");
+    lcd.setCursor(0, 1);
+    lcd.print("Please Use Me");
+
+    servo.write(90);
+
+    delay(3000);
+
+    // Tutup kembali
+    servo.write(0);
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Have a Good");
+    lcd.setCursor(0, 1);
+    lcd.print("Day :)");
+
+    delay(3000);
+
+    // Kembali standby
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("SmartBinSalabin");
+    lcd.setCursor(0, 1);
+    lcd.print("Ready...");
+  }
+
+  delay(100);
+}
